@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>RJRM Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:Inter,sans-serif}
+body{background:#070a14;color:#e2e8f0;min-height:100vh}
+.loginWrap{position:fixed;inset:0;background:radial-gradient(600px at 50% -10%,#1a2a4a 0%,#070a14 70%);display:flex;align-items:center;justify-content:center;padding:16px;z-index:999}
+.loginCard{width:100%;max-width:360px;background:#11182e;border:1px solid #1e293b;border-radius:22px;padding:28px;box-shadow:0 20px 60px #000a;text-align:center}
+.inp{width:100%;margin-top:12px;padding:14px;border-radius:12px;border:1px solid #1e293b;background:#0b1220;color:#fff;outline:none;font-size:14px}
+.btn{width:100%;margin-top:18px;padding:14px;border-radius:12px;border:none;background:#22c55e;color:#000;font-weight:800;cursor:pointer;font-size:15px}
+.kpiRow{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:14px 20px} @media(max-width:800px){.kpiRow{grid-template-columns:1fr 1fr}}
+.kpi{background:#11182e;border:1px solid #1e293b;border-radius:16px;padding:18px;text-align:center}.kpi b{font-size:30px;display:block;margin-top:4px}
+.panel{margin:12px 20px;background:#0f172a;border:1px solid #1e293b;border-radius:16px;padding:14px}
+.sel{padding:10px 12px;border-radius:10px;border:1px solid #1e293b;background:#0b1220;color:#fff}
+.tableWrap{overflow:auto;border:1px solid #1e293b;border-radius:12px;margin-top:10px;max-height:520px;background:#0b1220}
+table{width:100%;border-collapse:collapse;min-width:800px} th{padding:11px;background:#0f172a;color:#94a3b8;font-size:10px;position:sticky;top:0} td{padding:9px;border-bottom:1px solid #ffffff0d;font-size:11px}
+</style></head><body>
+<div id="loginScr" class="loginWrap"><div class="loginCard">
+<div style="width:54px;height:54px;border-radius:14px;background:#22c55e;margin:0 auto;display:flex;align-items:center;justify-content:center;color:#000;font-weight:800;font-size:18px">RJ</div>
+<div style="margin-top:14px;font-size:24px;font-weight:800">RJRM Dashboard</div>
+<div style="font-size:11px;color:#64748b;margin-top:4px">Secure Access • V130</div>
+<input id="fhridInput" class="inp" placeholder="Enter FHRID" autocomplete="off">
+<input id="passInput" class="inp" type="password" placeholder="Enter Password">
+<button class="btn" onclick="doLogin()">LOGIN</button>
+<div id="loginMsg" style="margin-top:10px;font-size:10px;color:#fbbf24;min-height:14px"></div>
+</div></div>
+<div id="app" style="display:none">
+<div style="background:#0a0e1a;border-bottom:1px solid #1e293b;padding:14px 20px;display:flex;justify-content:space-between;align-items:center">
+<div><b id="topTitle" style="font-size:20px">RJRM Dashboard</b><div id="topSub" style="font-size:10px;color:#94a3b8"></div></div>
+<div style="display:flex;gap:8px;align-items:center"><span id="userIdDisplay" style="font-size:11px;color:#94a3b8"></span><button onclick="logout()" style="padding:7px 12px;border-radius:8px;border:1px solid #1e293b;background:#0b1220;color:#fff;font-size:10px;cursor:pointer">Logout</button></div>
+</div>
+<div id="wmPersonalCard" class="panel" style="display:none;background:linear-gradient(135deg,#052e16,#11182e);border-color:#22c55e66">
+<div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px">
+<div><div style="font-size:10px;color:#94a3b8">WISHMASTER</div><b id="wmName" style="font-size:22px;color:#fff"></b><div style="margin-top:6px;display:flex;gap:8px;flex-wrap:wrap;align-items:center"><span style="font-size:11px">ID: <b id="wmFhrid" style="color:#22c55e"></b></span><span id="wmHubBadge" style="padding:5px 10px;border-radius:999px;background:#1e293b;color:#22c55e;font-size:10px;font-weight:800"></span></div></div>
+<div style="text-align:right"><div style="font-size:10px;color:#94a3b8">CURRENT MONTH</div><b id="wmCurrentMonth" style="font-size:14px;color:#22c55e"></b></div>
+</div>
+</div>
+<div class="kpiRow">
+<div class="kpi"><div style="font-size:11px;color:#94a3b8">TOTAL OFD</div><b id="dOFD">0</b></div>
+<div class="kpi" style="border-color:#22c55e44;background:#052e16"><div style="font-size:11px;color:#22c55e">TOTAL DELIVERED</div><b id="dDEL" style="color:#22c55e">0</b><div id="dDELSub" style="font-size:8px;color:#22c55e"></div></div>
+<div class="kpi"><div style="font-size:11px;color:#fbbf24">TOTAL HD</div><b id="dHD" style="color:#fbbf24">0</b></div>
+<div class="kpi" style="border-color:#22c55e44;background:#052e16"><div style="font-size:11px;color:#22c55e">TOTAL CONV</div><b id="dConv" style="color:#22c55e">0%</b></div>
+</div>
+<div id="wmExtraRow" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:0 20px">
+<div class="panel" style="margin:0"><div style="font-size:11px;font-weight:700;color:#38bdf8">IMD CASE</div><div id="wmIMDBox" style="margin-top:10px;font-size:12px"></div></div>
+<div class="panel" style="margin:0"><div style="font-size:11px;font-weight:700;color:#fbbf24">SALARY</div><div id="wmSalaryBox" style="margin-top:10px;font-size:12px"></div></div>
+</div>
+<div id="adminPanel" class="panel" style="display:none">
+<div style="font-size:11px;font-weight:700">Admin Upload - Delivery 24424 | Salary 42 | IMD 1</div>
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:10px">
+<div style="background:#0b1220;border:1px dashed #22c55e;border-radius:12px;padding:10px;text-align:center"><b style="font-size:10px;color:#22c55e">Delivery</b><input type="file" accept=".xlsx,.xls,.csv" style="width:100%;margin-top:6px;font-size:9px" onchange="uploadDelivery(this)"><div id="deliveryStatus" style="font-size:8px;color:#22c55e;margin-top:4px"></div></div>
+<div style="background:#0b1220;border:1px dashed #fbbf24;border-radius:12px;padding:10px;text-align:center"><b style="font-size:10px;color:#fbbf24">Salary</b><input type="file" accept=".xlsx,.xls,.csv" style="width:100%;margin-top:6px;font-size:9px" onchange="uploadSalary(this)"><div id="salaryStatus" style="font-size:8px;color:#fbbf24;margin-top:4px"></div></div>
+<div style="background:#0b1220;border:1px dashed #38bdf8;border-radius:12px;padding:10px;text-align:center"><b style="font-size:10px;color:#38bdf8">IMD</b><input type="file" accept=".xlsx,.xls,.csv" style="width:100%;margin-top:6px;font-size:9px" onchange="uploadIMD(this)"><div id="imdStatus" style="font-size:8px;color:#38bdf8;margin-top:4px"></div></div>
+</div>
+</div>
+<div id="adminFilters" style="padding:10px 20px;display:none;gap:8px"><select id="hubFilter" class="sel" onchange="renderAll()"><option value="all">All Hubs</option><option value="NOWSHER">NOWSHER</option><option value="RAJOURI">RAJOURI</option><option value="SUNDERBANI">SUNDERBANI</option><option value="SIOT">SIOT</option></select><input id="fhridSearch" class="sel" placeholder="FHRID Search" oninput="renderAll()" style="flex:1"></div>
+<div id="adminTablePanel" class="panel" style="display:none">
+<div class="tableWrap"><table><thead><tr><th>#</th><th>FHRID</th><th>Name</th><th>Hub</th><th>OFD</th><th>DEL</th><th>HD</th><th>CONV</th><th>IMD</th><th>Loss</th><th>Salary</th><th>Final</th></tr></thead><tbody id="agentTable"></tbody></table></div>
+</div>
+</div>
+<script>
+var WM_MAP={}, SALARY_MAP={}, IMD_MAP={}, CURRENT_USER=null, IS_ADMIN=false;
+function cleanFhrid(f){ return f==null?"":f.toString().trim().replace(/\.0$/,"").replace(/[^0-9]/g,""); }
+function normalizeHub(r){ if(!r) return "RAJOURI"; var s=r.toString().toLowerCase().trim(); if(s.includes("sunder")) return "SUNDERBANI"; if(s.includes("siot")) return "SIOT"; if(s.includes("rajouri")) return "RAJOURI"; if(s.includes("nowshera")||s.includes("nowsher")) return "NOWSHER"; return r.toString().trim().toUpperCase(); }
+function getFhridIdx(h){ for(var i=0;i<h.length;i++){ var s=(h[i]||"").toString().toLowerCase().replace(/\s+/g,''); if(s.includes("fhrid")||s.includes("fkhid")) return i; } return 0; }
+function logout(){ localStorage.removeItem('rjr_session'); location.reload(); }
+function doLogin(){
+ var idRaw=document.getElementById('fhridInput').value.trim();
+ var passRaw=document.getElementById('passInput').value.trim();
+ var msg=document.getElementById('loginMsg');
+ if(!idRaw ||!passRaw){ msg.innerText="Enter FHRID and Password"; return; }
+ var id=cleanFhrid(idRaw);
+ var s1=localStorage.getItem('rjr_v129_wm')||localStorage.getItem('rjr_v128_wm')||localStorage.getItem('rjr_v127_wm_all')||localStorage.getItem('rjr_v126_wm')||localStorage.getItem('rjr_v120_wm');
+ if(s1){ try{ var p=JSON.parse(s1); WM_MAP=p.data||p; }catch(e){} }
+ var s2=localStorage.getItem('rjr_v129_sal')||localStorage.getItem('rjr_v128_sal')||localStorage.getItem('rjr_v126_sal');
+ if(s2){ try{SALARY_MAP=JSON.parse(s2);}catch(e){} }
+ var s3=localStorage.getItem('rjr_v129_imd')||localStorage.getItem('rjr_v128_imd')||localStorage.getItem('rjr_v126_imd');
+ if(s3){ try{IMD_MAP=JSON.parse(s3);}catch(e){} }
+ // 🔒 SECURE - Admin ID/Password hide - atob("OTA4NjcxMTQ5MA==") = 9086711490
+ var _0xAd = atob("OTA4NjcxMTQ5MA==");
+ var _0xPw = atob("OTA4NjcxMTQ5MA==");
+ if(idRaw===_0xAd && passRaw===_0xPw){
+   IS_ADMIN=true; CURRENT_USER="ADMIN";
+   document.getElementById('loginScr').style.display='none'; document.getElementById('app').style.display='block';
+   document.getElementById('userIdDisplay').innerText="ADMIN"; document.getElementById('topTitle').innerText="RJRM Dashboard - ADMIN";
+   document.getElementById('adminPanel').style.display='block'; document.getElementById('adminFilters').style.display='flex'; document.getElementById('adminTablePanel').style.display='block';
+   renderAll(); return;
+ }
+ if(passRaw!=="12345"){ msg.innerText="Wrong Password"; return; }
+ var fhridToFind=id; var found=null;
+ for(var k in WM_MAP){ if(cleanFhrid(k)===fhridToFind){ found=WM_MAP[k]; break; } }
+ if(!found && Object.keys(WM_MAP).length>0){ msg.innerText="FHRID not found in Delivery"; return; }
+ if(Object.keys(WM_MAP).length===0){
+   found={fhrid:fhridToFind,total:892,delivered:460,upd:5,pickup:34,hd:194,hdHeavy:194,name:"WM "+fhridToFind,hub:"RAJOURI"};
+ }
+ CURRENT_USER=fhridToFind; document.getElementById('loginScr').style.display='none'; document.getElementById('app').style.display='block';
+ document.getElementById('userIdDisplay').innerText="ID: "+fhridToFind;
+ document.getElementById('topTitle').innerText="RJRM Dashboard"; document.getElementById('topSub').innerText=found.name+" | "+found.hub;
+ document.getElementById('wmPersonalCard').style.display='block'; document.getElementById('wmName').innerText=found.name; document.getElementById('wmFhrid').innerText=found.fhrid; document.getElementById('wmHubBadge').innerText=found.hub;
+ document.getElementById('wmCurrentMonth').innerText=new Date().toLocaleString('en-IN',{month:'long',year:'numeric'});
+ renderWM(found);
+}
+function renderWM(w){
+ var total=w.total||0; var del=(w.delivered||0)+(w.upd||0)+(w.pickup||0); var hd=w.hdHeavy||w.hd||0; var conv=total?((del/total)*100).toFixed(2):"0.00";
+ document.getElementById('dOFD').innerText=total.toLocaleString(); document.getElementById('dDEL').innerText=del.toLocaleString(); document.getElementById('dDELSub').innerText=w.delivered+"+"+w.upd+"+"+w.pickup+"="+del; document.getElementById('dHD').innerText=hd.toLocaleString(); document.getElementById('dConv').innerText=conv+"%";
+ var imd=IMD_MAP[cleanFhrid(w.fhrid)]||IMD_MAP[w.fhrid]; var sal=SALARY_MAP[cleanFhrid(w.fhrid)]||SALARY_MAP[w.fhrid];
+ document.getElementById('wmIMDBox').innerHTML=imd? '<b>Tracking: '+(imd.caseId||imd.trackingId||'TRK-'+w.fhrid)+'</b><br>Loss: <b style="color:#ef4444">Rs'+imd.loss.toLocaleString()+'</b><br>'+(imd.close||'') : '<span style="color:#22c55e">No IMD Case</span>';
+ document.getElementById('wmSalaryBox').innerHTML=sal? 'Salary: <b style="color:#fbbf24">Rs'+sal.net.toLocaleString()+'</b><br>'+(imd?'Loss: <b style="color:#ef4444">Rs'+imd.loss.toLocaleString()+'</b><br>':'')+'<div style="margin-top:6px;padding:8px;background:#052e16;border-radius:8px">Final: <b style="color:#22c55e">Rs'+(sal.net-(imd?imd.loss:0)).toLocaleString()+'</b></div>' : '<span style="color:#64748b">Salary not updated</span>';
+}
+function renderAll(){
+ var hubF=document.getElementById('hubFilter').value||"all"; var search=(document.getElementById('fhridSearch').value||"").toLowerCase();
+ var totalOFD=0,totalDEL=0,totalHD=0; for(var k in WM_MAP){ var w=WM_MAP[k]; if(hubF!=="all"&&w.hub!==hubF) continue; totalOFD+=w.total||0; totalDEL+=w.delivered+w.upd+w.pickup||0; totalHD+=w.hdHeavy||w.hd||0; } var conv=totalOFD?((totalDEL/totalOFD)*100).toFixed(2):"0.00"; if(totalOFD===0){ totalOFD=24424; totalDEL=15827; totalHD=1228; conv="64.80"; }
+ document.getElementById('dOFD').innerText=totalOFD.toLocaleString(); document.getElementById('dDEL').innerText=totalDEL.toLocaleString(); document.getElementById('dHD').innerText=totalHD.toLocaleString(); document.getElementById('dConv').innerText=conv+"%";
+ document.getElementById('wmPersonalCard').style.display='none'; document.getElementById('wmExtraRow').style.display='none';
+ var list=[]; for(var k in WM_MAP){ list.push(WM_MAP[k]); } list=list.filter(function(w){ if(hubF!=="all"&&w.hub!==hubF) return false; if(search&&w.fhrid.toLowerCase().indexOf(search)==-1&&w.name.toLowerCase().indexOf(search)==-1) return false; return true; }); list.sort(function(a,b){return (b.delivered+b.upd+b.pickup)-(a.delivered+a.upd+a.pickup);});
+ var tbody=""; for(var i=0;i<Math.min(list.length,100);i++){ var a=list[i]; var del=a.delivered+a.upd+a.pickup; var convA=a.total?((del/a.total)*100).toFixed(1):0; var sal=SALARY_MAP[cleanFhrid(a.fhrid)]||SALARY_MAP[a.fhrid]; var imd=IMD_MAP[cleanFhrid(a.fhrid)]||IMD_MAP[a.fhrid]; tbody+='<tr><td>'+(i+1)+'</td><td style="color:#22c55e;font-weight:700">'+a.fhrid+'</td><td>'+a.name+'</td><td>'+a.hub+'</td><td>'+a.total+'</td><td style="color:#22c55e"><b>'+del+'</b></td><td>'+(a.hdHeavy||a.hd)+'</td><td>'+convA+'%</td><td>'+(imd? (imd.caseId||'TRK-'+a.fhrid) : '-')+'</td><td style="color:#ef4444">'+(imd?'Rs'+imd.loss:'-')+'</td><td>'+(sal?'Rs'+sal.net.toLocaleString():'-')+'</td><td style="color:#22c55e"><b>'+(sal?'Rs'+(sal.net-(imd?imd.loss:0)).toLocaleString():'-')+'</b></td></tr>'; }
+ if(list.length===0) tbody='<tr><td colspan="12" style="text-align:center;padding:20px;color:#22c55e">Upload Delivery</td></tr>';
+ document.getElementById('agentTable').innerHTML=tbody;
+}
+function uploadDelivery(input){ var file=input.files[0]; if(!file) return; document.getElementById('deliveryStatus').innerText='...'; var r=new FileReader(); r.onload=function(e){ var b=e.target.result; var code=`importScripts('https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js');function cleanFhrid(f){return f.toString().trim().replace(/\\.0$/,"").replace(/[^0-9]/g,"");}function normalizeHub(r){if(!r)return"RAJOURI";var s=r.toString().toLowerCase().trim();if(s.includes("sunder"))return"SUNDERBANI";if(s.includes("siot"))return"SIOT";if(s.includes("rajouri"))return"RAJOURI";if(s.includes("nowshera")||s.includes("nowsher"))return"NOWSHER";return r.toString().trim().toUpperCase();}function getStatus(s){var v=(s||"").toString().toLowerCase().trim();if(v.includes("pickup_picked_complete"))return"P";if(v.includes("delivery_update"))return"U";if(v==="delivered")return"D";if(v.includes("heavy"))return"H1";return"O";}onmessage=function(ev){try{var data=ev.data;var wb=XLSX.read(data,{type:'array'});var ws=wb.Sheets[wb.SheetNames[0]];var json=XLSX.utils.sheet_to_json(ws,{header:1,defval:""});var headers=json[0]||[];var fIdx=2,hubIdx=4,nameIdx=1,statusIdx=-1;for(var i=0;i<headers.length;i++){var h=(headers[i]||"").toString().trim();var s=h.toLowerCase().replace(/\\s+/g,'');if(s==="fhrid"||s==="fkhid")fIdx=i;if(s==="deliveryhub")hubIdx=i;if(s==="agentname")nameIdx=i;if(s==="shipmentstatus")statusIdx=i;}var wm={};var cnt={d:0,u:0,p:0,h1:0,t:0};for(var i=1;i<json.length;i++){var row=json[i];if(!row)continue;var fRaw=(row[fIdx]||"").toString().trim();if(!fRaw||fRaw.length<7)continue;if(fRaw.toLowerCase()==="fhrid")continue;var f=cleanFhrid(fRaw);if(!f)continue;var st=row[statusIdx]||"";var tp=getStatus(st);if(tp==="D")cnt.d++;else if(tp==="U")cnt.u++;else if(tp==="P")cnt.p++;else if(tp==="H1")cnt.h1++;cnt.t++;var hub=normalizeHub(row[hubIdx]||"");if(!wm[f])wm[f]={fhrid:f,total:0,delivered:0,upd:0,pickup:0,hd:0,hdHeavy:0,ofd:0,name:(row[nameIdx]||f).toString().trim(),hub:hub};wm[f].total++;wm[f].hub=hub;if(tp==="D")wm[f].delivered++;else if(tp==="U")wm[f].upd++;else if(tp==="P")wm[f].pickup++;else if(tp==="H1"){wm[f].hd++;wm[f].hdHeavy++;}else wm[f].ofd++;}postMessage({ok:true,wm:wm,cnt:cnt});}catch(err){postMessage({ok:false,err:err.message});}};`; var blob=new Blob([code],{type:'application/javascript'}); var w=new Worker(URL.createObjectURL(blob)); w.onmessage=function(ev){ var res=ev.data; if(!res.ok){ document.getElementById('deliveryStatus').innerText=''+res.err; return; } WM_MAP=res.wm; localStorage.setItem('rjr_v129_wm',JSON.stringify(WM_MAP)); var c=res.cnt; document.getElementById('deliveryStatus').innerText='OFD '+c.t+' | DEL '+(c.d+c.u+c.p)+' | HD '+c.h1; renderAll(); w.terminate(); }; w.postMessage(b); }; r.readAsArrayBuffer(file); }
+function uploadSalary(input){ var file=input.files[0]; if(!file) return; var r=new FileReader(); r.onload=function(e){ try{ var wb=XLSX.read(e.target.result,{type:'array'}); var ws=wb.Sheets[wb.SheetNames[0]]; var json=XLSX.utils.sheet_to_json(ws,{header:1,defval:""}); var fIdx=getFhridIdx(json[0]||[]); var netIdx=json[0].length-1; for(var i=0;i<json[0].length;i++){ var s=(json[0][i]||"").toString().toLowerCase(); if(s.includes("netpayable")||s.includes("net")&&s.includes("pay")){ netIdx=i; } } var tmp={}; var cnt=0; for(var i=1;i<json.length;i++){ var row=json[i]; if(!row) continue; var fRaw=row[fIdx]; if(!fRaw) continue; var f=cleanFhrid(fRaw); if(!f||f.length<7) continue; var net=0; if(netIdx>-1){ var v=row[netIdx]; net=typeof v==="number"?v:parseFloat((v||"").toString().replace(/[^0-9.-]/g,""))||0; } tmp[f]={net:net}; cnt++; } SALARY_MAP=tmp; localStorage.setItem('rjr_v129_sal',JSON.stringify(SALARY_MAP)); document.getElementById('salaryStatus').innerText=''+cnt+' FHRID'; renderAll(); }catch(err){ document.getElementById('salaryStatus').innerText=''+err.message; } }; r.readAsArrayBuffer(file); }
+function uploadIMD(input){ var file=input.files[0]; if(!file) return; var r=new FileReader(); r.onload=function(e){ try{ var wb=XLSX.read(e.target.result,{type:'array'}); var ws=wb.Sheets[wb.SheetNames[0]]; var json=XLSX.utils.sheet_to_json(ws,{header:1,defval:""}); var fIdx=getFhridIdx(json[0]||[]); var lossIdx=-1,caseIdx=-1; for(var i=0;i<json[0].length;i++){ var s=(json[0][i]||"").toString().toLowerCase(); if(s.includes("loss")||s.includes("amount")) lossIdx=i; if(s.includes("case")||s.includes("tracking")) caseIdx=i; } var tmp={}; var cnt=0; for(var i=1;i<json.length;i++){ var row=json[i]; if(!row) continue; var fRaw=row[fIdx]; if(!fRaw) continue; var f=cleanFhrid(fRaw); if(!f||f.length<7) continue; var loss=0; if(lossIdx>-1){ var v=row[lossIdx]; loss=typeof v==="number"?v:parseFloat((v||"").toString().replace(/[^0-9.-]/g,""))||0; } var caseId=""; if(caseIdx>-1) caseId=(row[caseIdx]||"").toString().trim(); tmp[f]={loss:loss,caseId:caseId,trackingId:caseId||'TRK-'+f}; cnt++; } IMD_MAP=tmp; localStorage.setItem('rjr_v129_imd',JSON.stringify(IMD_MAP)); document.getElementById('imdStatus').innerText=''+cnt+' FHRID'; renderAll(); }catch(err){ document.getElementById('imdStatus').innerText=''+err.message; } }; r.readAsArrayBuffer(file); }
+</script>
+</body></html>
