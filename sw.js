@@ -1,0 +1,17 @@
+const CACHE_NAME='rjrm-v28-pwa';
+self.addEventListener('install',e=>{
+ e.waitUntil(caches.open(CACHE_NAME).then(c=>c.addAll(['index.html','manifest.json'])));
+ self.skipWaiting();
+});
+self.addEventListener('fetch',e=>{
+ e.respondWith(caches.match(e.request).then(r=>{
+  return r||fetch(e.request).then(res=>{
+   if(e.request.url.includes('docs.google.com')) return res;
+   return caches.open(CACHE_NAME).then(ca=>{ca.put(e.request,res.clone());return res;});
+  });
+ }).catch(()=>fetch(e.request)));
+});
+self.addEventListener('activate',e=>{
+ e.waitUntil(caches.keys().then(ks=>Promise.all(ks.map(k=>{if(k!==CACHE_NAME) return caches.delete(k);}))));
+ self.clients.claim();
+});
