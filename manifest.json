@@ -1,0 +1,9 @@
+{
+  "name": "RJRM Logistics",
+  "short_name": "RJRM",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#FFFBF0",
+  "theme_color": "#0A1931",
+  "icons": [{"src": "https://cdn-icons-png.flaticon.com/512/609/609803.png","sizes": "512x512","type": "image/png"}]
+}
